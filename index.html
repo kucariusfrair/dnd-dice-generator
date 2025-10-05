@@ -1,0 +1,1695 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор бросков кубиков D&D</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #f1c40f;
+            --fail-color: #e74c3c;
+            --dice-color: #fff;
+            --dot-color: #333;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #ecf0f1;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        /* Стили для навигационного меню */
+        .main-nav {
+            margin-bottom: 30px;
+            background-color: rgba(44, 62, 80, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .nav-list {
+            list-style: none;
+            display: flex;
+            padding: 0;
+        }
+        
+        .nav-item {
+            position: relative;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 15px 25px;
+            color: #ecf0f1;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .nav-link:hover {
+            background-color: rgba(52, 73, 94, 0.8);
+            color: #f1c40f;
+        }
+        
+        .menu-icon {
+            margin-right: 8px;
+            font-size: 1.2rem;
+        }
+        
+        .submenu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: rgba(44, 62, 80, 0.95);
+            min-width: 300px;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1000;
+        }
+        
+        .submenu .nav-link {
+            padding: 12px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .submenu .nav-link:last-child {
+            border-bottom: none;
+        }
+        
+        .nav-item:hover .submenu {
+            display: block;
+        }
+        
+        .active-section {
+            background-color: rgba(52, 152, 219, 0.3);
+            color: #f1c40f;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: rgba(44, 62, 80, 0.7);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #f1c40f;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: rgba(44, 62, 80, 0.7);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .dice-selector, .quantity-selector, .advantage-selector, .modifier-selector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .modifier-checkbox {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+        
+        .modifier-checkbox input {
+            margin-right: 5px;
+        }
+        
+        select, input, button {
+            padding: 12px 15px;
+            margin: 5px;
+            border: none;
+            border-radius: 8px;
+            background-color: #34495e;
+            color: #ecf0f1;
+            font-size: 1rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        button {
+            background: linear-gradient(to bottom, #3498db, #2980b9);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            padding: 12px 25px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        .clear-history {
+            background: linear-gradient(to bottom, #e74c3c, #c0392b);
+            margin-top: 10px;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+        
+        .results {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            min-height: 200px;
+        }
+        
+        .dice-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 10px;
+        }
+        
+        .dice-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .dice-icon::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 10px;
+            padding: 3px;
+            background: transparent;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+        
+        .dice-icon.d4 { background-color: #e74c3c; }
+        .dice-icon.d6 { background-color: #3498db; }
+        .dice-icon.d8 { background-color: #2ecc71; }
+        .dice-icon.d10 { background-color: #f39c12; }
+        .dice-icon.d12 { background-color: #9b59b6; }
+        .dice-icon.d20 { background-color: #1abc9c; }
+        .dice-icon.d100 { background-color: #e67e22; }
+        
+        .dice-icon.rolling {
+            animation: icon-roll 1s ease-out;
+        }
+        
+        @keyframes icon-roll {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(90deg) scale(1.1); }
+            50% { transform: rotate(180deg) scale(1); }
+            75% { transform: rotate(270deg) scale(1.1); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        
+        .critical-success {
+            animation: glow-success 2s infinite;
+        }
+        
+        .critical-success::before {
+            background: var(--success-color);
+            animation: border-pulse-success 2s infinite;
+        }
+        
+        .critical-fail {
+            animation: glow-fail 2s infinite;
+        }
+        
+        .critical-fail::before {
+            background: var(--fail-color);
+            animation: border-pulse-fail 2s infinite;
+        }
+        
+        @keyframes glow-success {
+            0% { box-shadow: 0 0 5px var(--success-color), 0 5px 15px rgba(0, 0, 0, 0.3); }
+            50% { box-shadow: 0 0 20px var(--success-color), 0 5px 15px rgba(0, 0, 0, 0.3); }
+            100% { box-shadow: 0 0 5px var(--success-color), 0 5px 15px rgba(0, 0, 0, 0.3); }
+        }
+        
+        @keyframes glow-fail {
+            0% { box-shadow: 0 0 5px var(--fail-color), 0 5px 15px rgba(0, 0, 0, 0.3); }
+            50% { box-shadow: 0 0 20px var(--fail-color), 0 5px 15px rgba(0, 0, 0, 0.3); }
+            100% { box-shadow: 0 0 5px var(--fail-color), 0 5px 15px rgba(0, 0, 0, 0.3); }
+        }
+        
+        @keyframes border-pulse-success {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes border-pulse-fail {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .result-text {
+            text-align: center;
+            font-size: 1.1rem;
+            margin-top: 5px;
+            min-height: 30px;
+            font-weight: bold;
+        }
+        
+        .total {
+            text-align: center;
+            font-size: 1.5rem;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: rgba(44, 62, 80, 0.7);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            font-weight: bold;
+        }
+        
+        .history {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: rgba(44, 62, 80, 0.7);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .history h2 {
+            color: #f1c40f;
+            margin: 0;
+        }
+        
+        .history-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .history-item {
+            padding: 10px;
+            border-bottom: 1px solid #34495e;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .d100-result {
+            font-size: 2rem;
+            font-weight: bold;
+            padding: 20px;
+            background: linear-gradient(135deg, #e67e22, #d35400);
+            border-radius: 10px;
+            min-width: 120px;
+            text-align: center;
+            margin: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            color: white;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        
+        label {
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #f1c40f;
+        }
+        
+        .final-result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(44, 62, 80, 0.9);
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        /* Стили для раздела формул */
+        .formulas-section {
+            background-color: rgba(44, 62, 80, 0.7);
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .formulas-section h2 {
+            color: #f1c40f;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .formula-list {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .formula-item {
+            background-color: rgba(52, 73, 94, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .formula-item strong {
+            color: #f1c40f;
+        }
+        
+        /* Стили для раздела характеристик */
+        .characteristics-section {
+            background-color: rgba(44, 62, 80, 0.7);
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .characteristics-section h2 {
+            color: #f1c40f;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        /* Стили для раскрывающихся списков характеристик */
+        .characteristic-item {
+            background-color: rgba(52, 73, 94, 0.5);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        
+        .characteristic-header {
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s;
+            border-left: 4px solid #3498db;
+        }
+        
+        .characteristic-header:hover {
+            background-color: rgba(52, 73, 94, 0.7);
+        }
+        
+        .characteristic-content {
+            display: none;
+            padding: 20px;
+            background-color: rgba(30, 40, 50, 0.8);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .characteristic-content h3 {
+            color: #f1c40f;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+        }
+        
+        .characteristic-content p {
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+        
+        .characteristic-content ul {
+            margin-left: 25px;
+            margin-bottom: 15px;
+        }
+        
+        .characteristic-content li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        .arrow {
+            transition: transform 0.3s;
+            font-size: 1.2rem;
+        }
+        
+        .characteristic-item.active .arrow {
+            transform: rotate(180deg);
+        }
+        
+        .characteristic-item.active .characteristic-content {
+            display: block;
+        }
+        
+        /* Стили для раздела игровых заметок */
+        .notes-section {
+            background-color: rgba(44, 62, 80, 0.7);
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .notes-section h2 {
+            color: #f1c40f;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .editor-container {
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .toolbar {
+            background-color: #34495e;
+            padding: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            border-bottom: 1px solid #2c3e50;
+        }
+        
+        .toolbar button {
+            background: #2c3e50;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        .toolbar button:hover {
+            background-color: #3498db;
+        }
+        
+        .toolbar select {
+            background: #2c3e50;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            padding: 8px;
+            cursor: pointer;
+        }
+        
+        .editor {
+            min-height: 500px;
+            padding: 20px;
+            color: #333;
+            background-color: white;
+            outline: none;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+        
+        .editor:focus {
+            outline: none;
+        }
+        
+        .export-options {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .export-btn {
+            background: linear-gradient(to bottom, #2ecc71, #27ae60);
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .export-btn:active {
+            transform: translateY(1px);
+        }
+        
+        .export-btn.word {
+            background: linear-gradient(to bottom, #2b579a, #1e3a6d);
+        }
+        
+        @media (max-width: 768px) {
+            .dice-icon {
+                width: 70px;
+                height: 70px;
+                font-size: 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .history-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .nav-list {
+                flex-direction: column;
+            }
+            
+            .submenu {
+                position: static;
+                display: none;
+                width: 100%;
+            }
+            
+            .nav-item:hover .submenu {
+                display: block;
+            }
+            
+            .toolbar {
+                flex-direction: column;
+            }
+            
+            .export-options {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Главное меню -->
+        <nav class="main-nav">
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a class="nav-link" id="main-menu">
+                        <span class="menu-icon">☰</span> Главное
+                    </a>
+                    <ul class="submenu">
+                        <li><a class="nav-link" data-section="dice-generator">Генератор бросков кубиков D&D</a></li>
+                        <li><a class="nav-link" data-section="formulas">Основные формулы D&D</a></li>
+                        <li><a class="nav-link" data-section="characteristics">Использование характеристик</a></li>
+                        <li><a class="nav-link" data-section="notes">Игровые заметки</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Секция генератора кубиков -->
+        <section id="dice-generator-section">
+            <header>
+                <h1>Генератор бросков кубиков D&D</h1>
+                <p>Бросайте виртуальные кубики для своей настольной ролевой игры</p>
+            </header>
+            
+            <div class="controls">
+                <div class="dice-selector">
+                    <label for="dice-type">Тип кубика:</label>
+                    <select id="dice-type">
+                        <option value="4">D4 (четырехгранный)</option>
+                        <option value="6" selected>D6 (шестигранный)</option>
+                        <option value="8">D8 (восьмигранный)</option>
+                        <option value="10">D10 (десятигранный)</option>
+                        <option value="12">D12 (двенадцатигранный)</option>
+                        <option value="20">D20 (двадцатигранный)</option>
+                        <option value="100">D100 (сотогранный)</option>
+                    </select>
+                </div>
+                
+                <div class="quantity-selector" id="quantity-container">
+                    <label for="dice-quantity">Количество кубиков:</label>
+                    <input type="number" id="dice-quantity" min="1" max="10" value="1">
+                </div>
+                
+                <div class="advantage-selector hidden" id="advantage-container">
+                    <label for="advantage">Тип броска D20:</label>
+                    <select id="advantage">
+                        <option value="normal">Обычный</option>
+                        <option value="advantage">Преимущество</option>
+                        <option value="disadvantage">Помеха</option>
+                    </select>
+                </div>
+                
+                <div class="modifier-selector">
+                    <label for="modifier-checkbox">Модификатор:</label>
+                    <div class="modifier-checkbox">
+                        <input type="checkbox" id="modifier-checkbox">
+                        <label for="modifier-checkbox">Добавить модификатор</label>
+                    </div>
+                    <select id="modifier-value" class="disabled">
+                        <option value="-5">-5</option>
+                        <option value="-4">-4</option>
+                        <option value="-3">-3</option>
+                        <option value="-2">-2</option>
+                        <option value="-1">-1</option>
+                        <option value="0" selected>0</option>
+                        <option value="1">+1</option>
+                        <option value="2">+2</option>
+                        <option value="3">+3</option>
+                        <option value="4">+4</option>
+                        <option value="5">+5</option>
+                        <option value="6">+6</option>
+                        <option value="7">+7</option>
+                        <option value="8">+8</option>
+                        <option value="9">+9</option>
+                        <option value="10">+10</option>
+                    </select>
+                </div>
+                
+                <button id="roll-button">Бросить кубики</button>
+            </div>
+            
+            <div class="total" id="total-result">
+                Общая сумма: -
+            </div>
+            
+            <div class="results" id="results-container">
+                <!-- Здесь будут появляться результаты бросков -->
+            </div>
+            
+            <div class="history">
+                <div class="history-header">
+                    <h2>История бросков</h2>
+                    <button id="clear-history" class="clear-history">Очистить историю</button>
+                </div>
+                <div class="history-list" id="history-list">
+                    <!-- Здесь будет история бросков -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Секция формул D&D -->
+        <section id="formulas-section" class="formulas-section hidden">
+            <h2>Основные формулы D&D</h2>
+            <div class="formula-list">
+                <div class="formula-item">
+                    <strong>Модификатор характеристики:</strong> (Характеристика - 10) / 2. Округление в меньшую сторону.
+                </div>
+                <div class="formula-item">
+                    <strong>Атака ближнего боя:</strong> 1d20 + Бонус Мастерства + СИЛ (ЛОВ для фехтовального оружия)
+                </div>
+                <div class="formula-item">
+                    <strong>Урон ближнего боя:</strong> Кость оружия + СИЛ (ЛОВ для фехтовального оружия)
+                </div>
+                <div class="formula-item">
+                    <strong>Атака дальнего боя:</strong> 1d20 + Бонус Мастерства + ЛОВ (СИЛ для метательного оружия)
+                </div>
+                <div class="formula-item">
+                    <strong>Урон дальнего боя:</strong> Кость оружия + ЛОВ (СИЛ для метательного оружия)
+                </div>
+                <div class="formula-item">
+                    <strong>Атака заклинанием:</strong> 1d20 + Бонус Мастерства + модификатор базовой характеристики заклинания
+                </div>
+                <div class="formula-item">
+                    <strong>Урон заклинания:</strong> индивидуален для каждого заклинания
+                </div>
+                <div class="formula-item">
+                    <strong>Сложность спасброска от заклинания:</strong> 8 + модификатор базовой характеристики заклинания + Бонус Мастерства
+                </div>
+                <div class="formula-item">
+                    <strong>Спасбросок:</strong> 1d20 + модификатор характеристики + Бонус Мастерства (если у вас есть владение спасброском)
+                </div>
+                <div class="formula-item">
+                    <strong>Порядок ходов в бою:</strong> 1d20 + Инициатива (ЛОВ)
+                </div>
+                <div class="formula-item">
+                    <strong>Пассивная внимательность:</strong> 10 + МДР (Восприятие)
+                </div>
+                <div class="formula-item">
+                    <strong>Стабилизация умирающего:</strong> 1d20 + МДР (Медицина) Сл 10
+                </div>
+                <div class="formula-item">
+                    <strong>Применение инструментов:</strong> 1d20 + модификатор характеристики (скажет Мастер) + Бонус Мастерства
+                </div>
+            </div>
+        </section>
+
+        <!-- Секция характеристик -->
+        <section id="characteristics-section" class="characteristics-section hidden">
+            <h2>Использование характеристик</h2>
+            
+            <div class="characteristic-item" id="strength-item">
+                <div class="characteristic-header">
+                    <span>Сила</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="characteristic-content">
+                    <h3>СИЛА</h3>
+                    <p>Сила означает физическую силу и атлетические тренировки.</p>
+                    
+                    <h3>ПРОВЕРКИ СИЛЫ</h3>
+                    <p>Проверки Силы могут моделировать попытки поднять, толкнуть, подтянуть или сломать что-то, попытки втиснуть своё тело в некое пространство или другие попытки применения грубой силы. Навык Атлетика отражает особую склонность к некоторым проверкам Силы.</p>
+                    
+                    <p><strong>Атлетика.</strong> Проверки Силы (Атлетика) покрывают разнообразные ситуации, в которых вы лазаете, прыгаете или плаваете. Примеры включают следующие действия:</p>
+                    <ul>
+                        <li>Вы пытаетесь взобраться на крутой утёс, избегая при этом опасностей, или попытки удержаться за что-то, когда вас пытаются стряхнуть.</li>
+                        <li>Вы пытаетесь прыгнуть на большое расстояние или совершить трюк в середине прыжка.</li>
+                        <li>Вы пытаетесь плыть или оставаться на плаву в бурных водах, во время шторма или среди зарослей водорослей. Другое существо может попытаться толкнуть или затянуть вас под воду, или как-то иным способом помешать вашему плаванию.</li>
+                    </ul>
+                    
+                    <p><strong>Прочие проверки Силы.</strong> Мастер может призвать к проверке Силы, если вы пытаетесь сделать что-то из следующего:</p>
+                    <ul>
+                        <li>Попытка открыть застрявшую, запертую или заложенную на засов дверь</li>
+                        <li>Попытка вырваться из оков</li>
+                        <li>Попытка протиснуться по узкому туннелю</li>
+                        <li>Попытка удержаться за фургон, не отцепившись от него во время движения</li>
+                        <li>Опрокидывание статуи</li>
+                        <li>Попытка удержать валун от падения</li>
+                    </ul>
+                    
+                    <h3>БРОСКИ АТАКИ И УРОНА</h3>
+                    <p>Вы добавляете модификатор Силы к броскам атаки и урона при совершении атак рукопашным оружием, таким как булава, секира или метательное копьё. Рукопашным оружием совершаются рукопашные атаки, а некоторые его виды можно метать, совершая, таким образом, дальнобойные атаки.</p>
+                    
+                    <h3>ПОДЪЁМ И ПЕРЕНОС</h3>
+                    <p>Значение Силы определяет вес, который вы можете переносить. При этом используются следующие термины:</p>
+                    <ul>
+                        <li><strong>Грузоподъёмность.</strong> Ваша грузоподъёмность это ваше значение Силы, умноженное на 15. Такой вес (в фунтах) вы можете носить, и это достаточно много, так что большинству персонажей не нужно об этом заботиться.</li>
+                        <li><strong>Толкание, волочение и подъём.</strong> Вы можете толкать, тянуть и отрывать от земли вес в фунтах, вдвое превышающий вашу грузоподъёмность (или значение Силы, умноженное на 30). Если вы толкаете или тянете вес, превышающий грузоподъёмность, ваша скорость падает до 5 футов.</li>
+                        <li><strong>Размер и Сила.</strong> Существа большого размера могут тащить больше, а Крохотные существа — меньше. За каждую категорию размера выше Средней удвойте его грузоподъёмность и вес, который оно может толкать, тянуть и поднимать. Для существа Крохотного размера уменьшите эти значения вдвое.</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="characteristic-item" id="dexterity-item">
+                <div class="characteristic-header">
+                    <span>Ловкость</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="characteristic-content">
+                    <h3>ЛОВКОСТЬ</h3>
+                    <p>Ловкость отвечает за проворство, реакцию и равновесие.</p>
+                    
+                    <h3>ПРОВЕРКИ ЛОВКОСТИ</h3>
+                    <p>Проверка Ловкости может моделировать любую попытку перемещаться ловко, быстро или тихо, либо попытку не упасть с шаткой опоры. Навыки Акробатика, Ловкость рук и Скрытность отражают особую склонность к некоторым проверкам Ловкости.</p>
+                    
+                    <p><strong>Акробатика.</strong> Проверки Ловкости (Акробатика) охватывают попытки устоять на ногах в неудобной ситуации, например, когда вы пытаетесь пробежаться по льду, балансируете на натянутом канате или стоите на палубе корабля в шторм. Мастер может также призвать к проверке Ловкости (Акробатика), чтобы увидеть, можете ли вы выполнить акробатический трюк, включая ныряние, кувырки, сальто и перекаты.</p>
+                    
+                    <p><strong>Ловкость рук.</strong> Если вы пытаетесь жонглировать или сделать ловкий трюк, например, подбросить что-то другому или спрятать что-то на своём теле, совершите проверку Ловкости (Ловкость рук). Мастер может призвать совершить проверку Ловкости (Ловкость рук) чтобы определить, можете ли вы срезать у ротозея кошелёк или подбросить что-то другому в карман.</p>
+                    
+                    <p><strong>Скрытность.</strong> Совершите проверку Ловкости (Скрытность), когда пытаетесь спрятаться от врагов, прокрасться мимо стражи, сбежать незамеченным или незаметно и неслышно подобраться к кому-то.</p>
+                    
+                    <p><strong>Прочие проверки Ловкости.</strong> Мастер может призвать к проверке Ловкости, если вы пытаетесь сделать что-то из следующего:</p>
+                    <ul>
+                        <li>Вы спускаетесь с тяжело нагруженной тачкой по крутому склону</li>
+                        <li>Вы закладываете крутой вираж на карете</li>
+                        <li>Вы вскрываете замок</li>
+                        <li>Вы обезвреживаете ловушку</li>
+                        <li>Вы связываете пленника</li>
+                        <li>Вы пытаетесь высвободиться из пут</li>
+                        <li>Вы играете на струнном инструменте</li>
+                        <li>Вы создаёте мелкий или высокодетализированный предмет</li>
+                    </ul>
+                    
+                    <h3>БРОСКИ АТАКИ И УРОНА</h3>
+                    <p>Вы добавляете модификатор Ловкости к броскам атаки и урона при совершении атак дальнобойным оружием, таким как праща или длинный лук. Вы также можете добавлять модификатор Ловкости к броскам атаки и урона при совершении атак рукопашным оружием со свойством «фехтовальное», таким как кинжал и рапира.</p>
+                    
+                    <h3>КЛАСС ДОСПЕХА</h3>
+                    <p>В зависимости от доспеха, который вы носите, вы можете добавлять модификатор Ловкости или его часть к Классу Доспеха.</p>
+                    
+                    <h3>ИНИЦИАТИВА</h3>
+                    <p>В начале каждого сражения вы совершаете проверку инициативы, совершая проверку Ловкости. Инициатива определяет порядок ходов существ в сражении.</p>
+                </div>
+            </div>
+            
+            <div class="characteristic-item" id="constitution-item">
+                <div class="characteristic-header">
+                    <span>Телосложение</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="characteristic-content">
+                    <h3>ТЕЛОСЛОЖЕНИЕ</h3>
+                    <p>Телосложение измеряет ваше здоровье, выносливость и жизненные силы.</p>
+                    
+                    <h3>ПРОВЕРКИ ТЕЛОСЛОЖЕНИЯ</h3>
+                    <p>Проверки Телосложения совершаются не часто, и от него не зависят никакие навыки, так как выносливость, которую отражает эта характеристика, пассивна, и персонаж или чудовище не может активно её использовать. Однако проверка Телосложения может моделировать вашу попытку сделать что-то необычное.</p>
+                    
+                    <p>Мастер может призвать к проверке Телосложения, если вы пытаетесь сделать что-то из следующего:</p>
+                    <ul>
+                        <li>Вы задерживаете дыхание</li>
+                        <li>Вы совершаете марш-бросок или несколько часов без перерыва работаете</li>
+                        <li>Вы долго не спите</li>
+                        <li>У вас нет еды и воды</li>
+                        <li>Вы пытаетесь осушить кружку пива одним махом</li>
+                    </ul>
+                    
+                    <h3>ХИТЫ</h3>
+                    <p>Модификатор Телосложения участвует в определении ваших хитов. Обычно вы добавляете модификатор Телосложения ко всем Костям Хитов, брошенным для определения хитов.</p>
+                    
+                    <p>Если ваш модификатор Телосложения изменяется, изменяется и максимум ваших хитов, как если бы новый модификатор был у вас с 1 уровня. Например, если вы повышаете значение Телосложения, когда достигаете 4 уровня, и ваш модификатор Телосложения увеличивается с +1 до +2, вы изменяете максимум хитов так, как будто этот модификатор всегда был +2. Вы добавляете 3 хита за первые три уровня, а затем определяете хиты за 4 уровень, используя уже новый модификатор. И наоборот, если на 7 уровне некий эффект уменьшит ваше значение Телосложения, уменьшив модификатор Телосложения на 1, максимум ваших хитов уменьшится на 7.</p>
+                </div>
+            </div>
+            
+            <div class="characteristic-item" id="intelligence-item">
+                <div class="characteristic-header">
+                    <span>Интеллект</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="characteristic-content">
+                    <h3>ИНТЕЛЛЕКТ</h3>
+                    <p>Интеллект измеряет силу ума, точность воспоминаний и способность здраво рассуждать.</p>
+                    
+                    <h3>ПРОВЕРКИ ИНТЕЛЛЕКТА</h3>
+                    <p>Проверки Интеллекта происходят когда вы используете логику, образование, память или дедуктивное мышление. Навыки История, Магия, Природа, Расследование и Религия отражают особую склонность к некоторым проверкам Интеллекта.</p>
+                    
+                    <p><strong>Расследование.</strong> Если вы ищете подсказки и делаете на их основе выводы, вы совершаете проверку Интеллекта (Расследование). Вы можете вычислить местоположение спрятанного предмета, понять по виду раны, каким оружием она была нанесена или определить самую слабую точку в туннеле, способную его обрушить. Рассматривание древних свитков в поисках тайного знания тоже может требовать совершения проверки Интеллекта (Расследование).</p>
+                    
+                    <p><strong>История.</strong> Проверка Интеллекта (История) определяет вашу способность вспомнить знания об исторических событиях, легендарных личностях, древних королевствах, былых спорах, недавних войнах и утерянных цивилизациях.</p>
+                    
+                    <p><strong>Магия.</strong> Проверка Интеллекта (Магия) определяет вашу способность вспомнить знания о заклинаниях, магических предметах, мистических символах, магических традициях, планах существования и обитателях этих планов.</p>
+                    
+                    <p><strong>Природа.</strong> Проверка Интеллекта (Природа) определяет вашу способность вспомнить знания о местности, о растениях и животных, о погоде и естественных циклах.</p>
+                    
+                    <p><strong>Религия.</strong> Проверка Интеллекта (Религия) определяет вашу способность вспомнить знания о божествах, ритуалах и молитвах, религиозных иерархиях, священных символах и практиках тайных культов.</p>
+                    
+                    <p><strong>Прочие проверки Интеллекта.</strong> Мастер может призвать к проверке Интеллекта, если вы пытаетесь сделать что-то из следующего:</p>
+                    <ul>
+                        <li>Вы общаетесь с существом без использования слов</li>
+                        <li>Вы оцениваете стоимость ценного предмета</li>
+                        <li>Вы маскируетесь под городского стража</li>
+                        <li>Вы подделываете документ</li>
+                        <li>Вы вспоминаете знание о ремесле или торговле</li>
+                        <li>Вы соревнуетесь с кем-то другим</li>
+                    </ul>
+                    
+                    <h3>БАЗОВАЯ ХАРАКТЕРИСТИКА ЗАКЛИНАНИЙ</h3>
+                    <p>Волшебники и изобретатели используют Интеллект при определении Сл спасбросков от накладываемых ими заклинаний.</p>
+                </div>
+            </div>
+            
+            <div class="characteristic-item" id="wisdom-item">
+                <div class="characteristic-header">
+                    <span>Мудрость</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="characteristic-content">
+                    <h3>МУДРОСТЬ</h3>
+                    <p>Мудрость определяет, как хорошо вы настроены на окружающий мир и отражает восприимчивость и интуицию.</p>
+                    
+                    <h3>ПРОВЕРКИ МУДРОСТИ</h3>
+                    <p>Проверки Мудрости могут отражать попытки понять язык тела, понять чьи-то переживания, заметить что-то в окружающем мире или позаботиться о раненом. Навыки Восприятие, Выживание, Медицина, Проницательность и Уход за животными отражают особую склонность к некоторым проверкам Мудрости.</p>
+                    
+                    <p><strong>Восприятие.</strong> Проверка Мудрости (Восприятие) позволяет вам увидеть, услышать или как-то иначе заметить присутствие чего-либо. Она измеряет вашу готовность к новым событиям и остроту ваших чувств. Например, вы можете подслушать разговор под дверью, подсмотреть в окно или услышать чудовищ, крадущихся по лесу. Или вы можете попытаться заметить что-то, что скрыто или легко можно пропустить, будь то орки, лежащие в засаде у дороги, головорезы, затаившиеся в тенях аллеи или свет от лампы под закрытой потайной дверью.</p>
+                    
+                    <p><strong>Выживание.</strong> Мастер может призвать совершить проверку Мудрости (Выживание) для выслеживания врагов, охоты на дичь, нахождения дороги в промёрзшей тундре, замечания признаков того, что рядом живут совомеды, предсказывания погоды и избегания зыбучих песков и прочих природных опасностей.</p>
+                    
+                    <p><strong>Медицина.</strong> Проверка Мудрости (Медицина) позволяет стабилизировать умирающего спутника или диагностировать болезнь.</p>
+                    
+                    <p><strong>Проницательность.</strong> Ваша проверка Мудрости (Проницательность) определяет, можете ли вы определить истинные намерения существа, например, при попытке распознать ложь или предсказать чей-то следующий шаг. При этом вы совершаете догадки по языку тела, особенностям разговора и переменах в поведении.</p>
+                    
+                    <p><strong>Уход за животными.</strong> Если возникает вопрос, можете ли вы успокоить одомашненное животное, удержать скакуна от того, чтобы он запаниковал, или почувствовать намерения животного, Мастер может призвать совершить проверку Мудрости (Уход за животными). Вы также совершаете проверку Мудрости (Уход за животными) для контролирования скакуна при совершении опасного манёвра.</p>
+                    
+                    <p><strong>Прочие проверки Мудрости.</strong> Мастер может призвать к проверке Мудрости, если вы пытаетесь сделать что-то из следующего:</p>
+                    <ul>
+                        <li>Вы пытаетесь понять, что делать дальше</li>
+                        <li>Вы пытаетесь распознать в живом или вроде бы мёртвом существе нежить</li>
+                    </ul>
+                    
+                    <h3>БАЗОВАЯ ХАРАКТЕРИСТИКА ЗАКЛИНАНИЙ</h3>
+                    <p>Друиды, жрецы и следопыты используют Мудрость при определении Сл спасбросков от накладываемых ими заклинаний.</p>
+                </div>
+            </div>
+            
+            <div class="characteristic-item" id="charisma-item">
+                <div class="characteristic-header">
+                    <span>Харизма</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="characteristic-content">
+                    <h3>ХАРИЗМА</h3>
+                    <p>Харизма измеряет вашу способность эффективно взаимодействовать с другими. Она охватывает такие факторы как уверенность в себе и красноречие, и может отражать привлекательную или внушительную внешность.</p>
+                    
+                    <h3>ПРОВЕРКИ ХАРИЗМЫ</h3>
+                    <p>Проверку Харизмы можно совершать при попытке повлиять на других или развлечь их, когда вы пытаетесь произвести впечатление или убедительно соврать, или если вы пытаетесь разобраться в сложной социальной ситуации. Навыки Выступление, Запугивание, Обман и Убеждение отражают особую склонность к некоторым проверкам Харизмы.</p>
+                    
+                    <p><strong>Выступление.</strong> Ваша проверка Харизмы (Выступление) определяет, насколько хорошо вы удовлетворили публику музыкой, танцем, актёрской игрой, рассказом или другим развлечением.</p>
+                    
+                    <p><strong>Запугивание.</strong> Когда вы пытаетесь воздействовать на других угрозами, враждебными действиями и физическим насилием, Мастер может попросить вас совершить проверку Харизмы (Запугивание). Примерами могут послужить добыча информации из пленника, убеждение головорезов отказаться от драки и угроза разбитой бутылкой ехидному визирю, чтобы тот изменил решение.</p>
+                    
+                    <p><strong>Обман.</strong> Ваша проверка Харизмы (Обман) определяет, можете ли вы намеренно утаить правду, хоть речами, хоть действиями. Такой обман охватывает всё, от направления других по неверному следу и двусмысленной речи до рассказывания откровенной лжи. Может применяться при отвлечении стражников, обмане торговцев, зарабатывании денег азартными играми, маскировке под других, отводе чужих подозрений ложными утверждениями и сохранении спокойного лица при рассказывании чудовищной лжи.</p>
+                    
+                    <p><strong>Убеждение.</strong> Если вы пытаетесь повлиять на существо или целую группу существ тактично, с уважением и добродушием, Мастер может попросить вас совершить проверку Харизмы (Убеждение). Обычно убеждение используется при добрых намерениях, при попытках подружиться, установить контакт или проявить этикет. Примеры убеждения других включают в себя попытки убедить дворецкого пропустить вас к королю, мирное урегулирование споров двух враждующих племён и воодушевление толпы горожан.</p>
+                    
+                    <p><strong>Прочие проверки Харизмы.</strong> Мастер может призвать к проверке Харизмы, если вы пытаетесь сделать что-то из следующего:</p>
+                    <ul>
+                        <li>Вы ищете, с кем лучше всего обсудить новости, слухи и сплетни</li>
+                        <li>Вы сливаетесь с толпой, чтобы узнать основные обсуждаемые темы</li>
+                    </ul>
+                    
+                    <h3>БАЗОВАЯ ХАРАКТЕРИСТИКА ЗАКЛИНАНИЙ</h3>
+                    <p>Барды, колдуны, паладины и чародеи используют Харизму при определении Сл спасбросков от накладываемых ими заклинаний.</p>
+                </div>
+            </div>
+            
+            <div class="characteristic-item active" id="saving-throws-item">
+                <div class="characteristic-header">
+                    <span>Спасброски</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="characteristic-content">
+                    <h3>СПАСБРОСКИ</h3>
+                    <p>Спасброски отражают вашу попытку сопротивляться заклинанию, ловушке, яду, болезни или другой подобной угрозе. Обычно это не вы решаете совершить спасбросок, а вас заставляют его сделать, когда персонаж получает плохой эффект.</p>
+                    
+                    <p>Для совершения спасброска бросьте к20 и добавьте модификатор соответствующей характеристики. Например, при совершении спасброска Ловкости используется модификатор Ловкости.</p>
+                    
+                    <p>Спасбросок может быть модифицирован ситуационным бонусом или штрафом, и может совершаться с преимуществом или помехой, на усмотрение Мастера.</p>
+                    
+                    <p>Классы дают владение как минимум двумя спасбросками. Волшебник, например, владеет спасбросками Интеллекта. Так же как в случае владения навыками, владение спасброском позволяет персонажу добавлять бонус мастерства к спасброскам соответствующей характеристики. У некоторых чудовищ тоже есть владение спасбросками.</p>
+                    
+                    <p>Сл спасброска определяется эффектом. Например, Сл спасброска от заклинания определяется базовой характеристикой заклинателя и его бонусом мастерства.</p>
+                    
+                    <p>Результат успешного или проваленного спасброска описан в эффекте, заставляющем совершить спасбросок. Обычно успех означает, что существо не получает урон или получает, но уменьшенный.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Секция игровых заметок -->
+        <section id="notes-section" class="notes-section hidden">
+            <h2>Игровые заметки</h2>
+            <p style="text-align: center; margin-bottom: 20px;">Создавайте и редактируйте свои игровые заметки с помощью этого текстового редактора</p>
+            
+            <div class="editor-container">
+                <div class="toolbar">
+                    <select id="format-block">
+                        <option value="p">Обычный текст</option>
+                        <option value="h1">Заголовок 1</option>
+                        <option value="h2">Заголовок 2</option>
+                        <option value="h3">Заголовок 3</option>
+                        <option value="blockquote">Цитата</option>
+                    </select>
+                    
+                    <select id="font-family">
+                        <option value="Arial, sans-serif">Arial</option>
+                        <option value="'Times New Roman', serif">Times New Roman</option>
+                        <option value="'Courier New', monospace">Courier New</option>
+                        <option value="Georgia, serif">Georgia</option>
+                    </select>
+                    
+                    <select id="font-size">
+                        <option value="1">Очень маленький</option>
+                        <option value="2">Маленький</option>
+                        <option value="3" selected>Обычный</option>
+                        <option value="4">Средний</option>
+                        <option value="5">Большой</option>
+                        <option value="6">Очень большой</option>
+                        <option value="7">Огромный</option>
+                    </select>
+                    
+                    <button id="bold-btn" title="Жирный"><b>B</b></button>
+                    <button id="italic-btn" title="Курсив"><i>I</i></button>
+                    <button id="underline-btn" title="Подчеркнутый"><u>U</u></button>
+                    
+                    <button id="justify-left-btn" title="Выровнять по левому краю">⫷</button>
+                    <button id="justify-center-btn" title="Выровнять по центру">⫸</button>
+                    <button id="justify-right-btn" title="Выровнять по правому краю">⫹</button>
+                    
+                    <button id="insert-unordered-list" title="Маркированный список">•</button>
+                    <button id="insert-ordered-list" title="Нумерованный список">1.</button>
+                    
+                    <button id="undo-btn" title="Отменить">↶</button>
+                    <button id="redo-btn" title="Повторить">↷</button>
+                </div>
+                
+                <div 
+                    id="editor" 
+                    class="editor" 
+                    contenteditable="true"
+                    style="min-height: 500px;"
+                >
+                    <p>Добро пожаловать в ваши игровые заметки!</p>
+                    <p>Здесь вы можете записывать информацию о вашей кампании, персонажах, сюжетных поворотах и других важных деталях.</p>
+                    <p>Используйте панель инструментов выше для форматирования текста.</p>
+                </div>
+            </div>
+            
+            <div class="export-options">
+                <button id="export-google-docs" class="export-btn">
+                    <span>📄</span> Экспорт в Google Docs
+                </button>
+                <button id="export-word" class="export-btn word">
+                    <span>📝</span> Экспорт в Word (.docx)
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const rollButton = document.getElementById('roll-button');
+            const diceTypeSelect = document.getElementById('dice-type');
+            const diceQuantityInput = document.getElementById('dice-quantity');
+            const quantityContainer = document.getElementById('quantity-container');
+            const advantageSelect = document.getElementById('advantage');
+            const advantageContainer = document.getElementById('advantage-container');
+            const modifierCheckbox = document.getElementById('modifier-checkbox');
+            const modifierValue = document.getElementById('modifier-value');
+            const resultsContainer = document.getElementById('results-container');
+            const totalResult = document.getElementById('total-result');
+            const historyList = document.getElementById('history-list');
+            const clearHistoryButton = document.getElementById('clear-history');
+            
+            // Элементы для навигации
+            const diceGeneratorSection = document.getElementById('dice-generator-section');
+            const formulasSection = document.getElementById('formulas-section');
+            const characteristicsSection = document.getElementById('characteristics-section');
+            const notesSection = document.getElementById('notes-section');
+            const navLinks = document.querySelectorAll('.nav-link[data-section]');
+            
+            // Элементы для раскрывающихся списков характеристик
+            const characteristicHeaders = document.querySelectorAll('.characteristic-header');
+            
+            // Элементы для редактора заметок
+            const editor = document.getElementById('editor');
+            const formatBlock = document.getElementById('format-block');
+            const fontFamily = document.getElementById('font-family');
+            const fontSize = document.getElementById('font-size');
+            const boldBtn = document.getElementById('bold-btn');
+            const italicBtn = document.getElementById('italic-btn');
+            const underlineBtn = document.getElementById('underline-btn');
+            const justifyLeftBtn = document.getElementById('justify-left-btn');
+            const justifyCenterBtn = document.getElementById('justify-center-btn');
+            const justifyRightBtn = document.getElementById('justify-right-btn');
+            const insertUnorderedList = document.getElementById('insert-unordered-list');
+            const insertOrderedList = document.getElementById('insert-ordered-list');
+            const undoBtn = document.getElementById('undo-btn');
+            const redoBtn = document.getElementById('redo-btn');
+            const exportGoogleDocsBtn = document.getElementById('export-google-docs');
+            const exportWordBtn = document.getElementById('export-word');
+            
+            let rollHistory = [];
+            let editorHistory = [];
+            let currentHistoryIndex = -1;
+            
+            // Сохраняем содержимое редактора при изменении
+            function saveEditorState() {
+                // Сохраняем только если состояние изменилось
+                const currentState = editor.innerHTML;
+                if (editorHistory.length === 0 || editorHistory[currentHistoryIndex] !== currentState) {
+                    // Удаляем все состояния после текущего индекса (если мы отменили и затем внесли изменения)
+                    editorHistory = editorHistory.slice(0, currentHistoryIndex + 1);
+                    editorHistory.push(currentState);
+                    currentHistoryIndex++;
+                    
+                    // Ограничиваем историю 50 состояниями
+                    if (editorHistory.length > 50) {
+                        editorHistory.shift();
+                        currentHistoryIndex--;
+                    }
+                }
+            }
+            
+            // Инициализация редактора
+            editor.addEventListener('input', saveEditorState);
+            editor.addEventListener('keydown', function(e) {
+                // Сохраняем состояние при нажатии Enter или других важных клавиш
+                if (e.key === 'Enter' || e.key === 'Tab') {
+                    setTimeout(saveEditorState, 10);
+                }
+            });
+            
+            // Сохраняем начальное состояние
+            saveEditorState();
+            
+            // Навигация между разделами
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    const section = this.getAttribute('data-section');
+                    
+                    // Скрываем все разделы
+                    diceGeneratorSection.classList.add('hidden');
+                    formulasSection.classList.add('hidden');
+                    characteristicsSection.classList.add('hidden');
+                    notesSection.classList.add('hidden');
+                    
+                    // Показываем выбранный раздел
+                    if (section === 'dice-generator') {
+                        diceGeneratorSection.classList.remove('hidden');
+                    } else if (section === 'formulas') {
+                        formulasSection.classList.remove('hidden');
+                    } else if (section === 'characteristics') {
+                        characteristicsSection.classList.remove('hidden');
+                    } else if (section === 'notes') {
+                        notesSection.classList.remove('hidden');
+                    }
+                    
+                    // Обновляем активные ссылки
+                    navLinks.forEach(navLink => {
+                        navLink.classList.remove('active-section');
+                    });
+                    this.classList.add('active-section');
+                });
+            });
+            
+            // Раскрытие/скрытие характеристик
+            characteristicHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const item = this.parentElement;
+                    item.classList.toggle('active');
+                });
+            });
+            
+            // Управление активностью поля модификатора
+            modifierCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    modifierValue.classList.remove('disabled');
+                } else {
+                    modifierValue.classList.add('disabled');
+                }
+            });
+            
+            // Показываем/скрываем выбор преимущества/помехи для D20
+            diceTypeSelect.addEventListener('change', function() {
+                const diceType = parseInt(diceTypeSelect.value);
+                
+                if (diceType === 20) {
+                    advantageContainer.classList.remove('hidden');
+                    quantityContainer.classList.add('hidden');
+                } else if (diceType === 100) {
+                    advantageContainer.classList.add('hidden');
+                    quantityContainer.classList.remove('hidden');
+                } else {
+                    advantageContainer.classList.add('hidden');
+                    quantityContainer.classList.remove('hidden');
+                }
+            });
+            
+            // Очистка истории
+            clearHistoryButton.addEventListener('click', function() {
+                historyList.innerHTML = '';
+                rollHistory = [];
+            });
+            
+            // Функциональность редактора заметок
+            formatBlock.addEventListener('change', function() {
+                document.execCommand('formatBlock', false, '<' + this.value + '>');
+                editor.focus();
+            });
+            
+            fontFamily.addEventListener('change', function() {
+                document.execCommand('fontName', false, this.value);
+                editor.focus();
+            });
+            
+            fontSize.addEventListener('change', function() {
+                document.execCommand('fontSize', false, this.value);
+                editor.focus();
+            });
+            
+            boldBtn.addEventListener('click', function() {
+                document.execCommand('bold', false, null);
+                editor.focus();
+            });
+            
+            italicBtn.addEventListener('click', function() {
+                document.execCommand('italic', false, null);
+                editor.focus();
+            });
+            
+            underlineBtn.addEventListener('click', function() {
+                document.execCommand('underline', false, null);
+                editor.focus();
+            });
+            
+            justifyLeftBtn.addEventListener('click', function() {
+                document.execCommand('justifyLeft', false, null);
+                editor.focus();
+            });
+            
+            justifyCenterBtn.addEventListener('click', function() {
+                document.execCommand('justifyCenter', false, null);
+                editor.focus();
+            });
+            
+            justifyRightBtn.addEventListener('click', function() {
+                document.execCommand('justifyRight', false, null);
+                editor.focus();
+            });
+            
+            insertUnorderedList.addEventListener('click', function() {
+                document.execCommand('insertUnorderedList', false, null);
+                editor.focus();
+            });
+            
+            insertOrderedList.addEventListener('click', function() {
+                document.execCommand('insertOrderedList', false, null);
+                editor.focus();
+            });
+            
+            undoBtn.addEventListener('click', function() {
+                if (currentHistoryIndex > 0) {
+                    currentHistoryIndex--;
+                    editor.innerHTML = editorHistory[currentHistoryIndex];
+                }
+                editor.focus();
+            });
+            
+            redoBtn.addEventListener('click', function() {
+                if (currentHistoryIndex < editorHistory.length - 1) {
+                    currentHistoryIndex++;
+                    editor.innerHTML = editorHistory[currentHistoryIndex];
+                }
+                editor.focus();
+            });
+            
+            // Экспорт в Google Docs
+            exportGoogleDocsBtn.addEventListener('click', function() {
+                const content = editor.innerHTML;
+                const blob = new Blob([`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>Игровые заметки D&D</title>
+                        <style>
+                            body { 
+                                font-family: Arial, sans-serif; 
+                                line-height: 1.6; 
+                                margin: 40px;
+                                color: #333;
+                            }
+                            h1, h2, h3 { color: #2c3e50; }
+                            blockquote { 
+                                border-left: 4px solid #3498db; 
+                                padding-left: 15px; 
+                                margin-left: 0;
+                                color: #555;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        ${content}
+                    </body>
+                    </html>
+                `], { type: 'text/html' });
+                
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'игровые-заметки-dnd.html';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                alert('Документ успешно экспортирован в формате HTML, который можно открыть в Google Docs!');
+            });
+            
+            // Экспорт в Word
+            exportWordBtn.addEventListener('click', function() {
+                const content = editor.innerText || editor.textContent;
+                const blob = new Blob([`
+                    <!DOCTYPE html>
+                    <html xmlns:o='urn:schemas-microsoft-com:office:office' 
+                          xmlns:w='urn:schemas-microsoft-com:office:word' 
+                          xmlns='http://www.w3.org/TR/REC-html40'>
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>Игровые заметки D&D</title>
+                        <!--[if gte mso 9]>
+                        <xml>
+                            <w:WordDocument>
+                                <w:View>Print</w:View>
+                                <w:Zoom>100</w:Zoom>
+                                <w:DoNotOptimizeForBrowser/>
+                            </w:WordDocument>
+                        </xml>
+                        <![endif]-->
+                        <style>
+                            body { 
+                                font-family: Arial, sans-serif; 
+                                line-height: 1.6; 
+                                margin: 40px;
+                                color: #333;
+                            }
+                            h1, h2, h3 { color: #2c3e50; }
+                        </style>
+                    </head>
+                    <body>
+                        ${editor.innerHTML}
+                    </body>
+                    </html>
+                `], { type: 'application/msword' });
+                
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'игровые-заметки-dnd.doc';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                alert('Документ успешно экспортирован в формате Word!');
+            });
+            
+            rollButton.addEventListener('click', function() {
+                const diceType = parseInt(diceTypeSelect.value);
+                let diceQuantity = parseInt(diceQuantityInput.value);
+                const advantage = advantageSelect.value;
+                const useModifier = modifierCheckbox.checked;
+                const modifier = useModifier ? parseInt(modifierValue.value) : 0;
+                
+                // Для D20 всегда бросаем 1 или 2 кубика в зависимости от типа броска
+                if (diceType === 20) {
+                    diceQuantity = (advantage === 'normal') ? 1 : 2;
+                }
+                
+                // Очищаем предыдущие результаты
+                resultsContainer.innerHTML = '';
+                
+                // Генерируем кубики
+                let totalSum = 0;
+                let results = [];
+                let finalResults = [];
+                let finalResult = 0;
+                let isCriticalSuccess = false;
+                let isCriticalFail = false;
+                
+                // Особые правила для D20 с преимуществом/помехой
+                if (diceType === 20 && diceQuantity === 2) {
+                    const result1 = rollDice(diceType);
+                    const result2 = rollDice(diceType);
+                    
+                    results.push(result1, result2);
+                    
+                    // Упрощенная логика: всегда выбираем по правилам преимущества/помехи
+                    if (advantage === 'advantage') {
+                        finalResult = Math.max(result1, result2);
+                    } else if (advantage === 'disadvantage') {
+                        finalResult = Math.min(result1, result2);
+                    }
+                    
+                    // Всегда учитываем модификатор
+                    totalSum = finalResult + modifier;
+                    
+                    finalResults.push(finalResult);
+                    
+                    // Создаем визуальное представление кубиков
+                    createDiceIconElement(diceType, result1, 0, false, false);
+                    createDiceIconElement(diceType, result2, 1, false, false);
+                    
+                } else if (diceType === 100) {
+                    // Для D100 просто показываем результат без анимации
+                    const result = rollDice(diceType);
+                    results.push(result);
+                    finalResults.push(result);
+                    totalSum = result + modifier;
+                    
+                    createD100Element(result, totalSum, useModifier, modifier);
+                } else {
+                    // Обычные броски
+                    for (let i = 0; i < diceQuantity; i++) {
+                        const result = rollDice(diceType);
+                        results.push(result);
+                        finalResults.push(result);
+                        totalSum += result;
+                        
+                        // Проверяем на критические броски для D20 при обычном броске
+                        if (diceType === 20 && advantage === 'normal') {
+                            if (result === 20) {
+                                isCriticalSuccess = true;
+                                // При критическом успехе модификатор не учитывается
+                                totalSum = 20;
+                            } else if (result === 1) {
+                                isCriticalFail = true;
+                                // При критическом провале модификатор не учитывается
+                                totalSum = 1;
+                            } else {
+                                // Обычный бросок - учитываем модификатор
+                                totalSum = result + modifier;
+                            }
+                        }
+                    }
+                    
+                    // Для не-D20 кубиков добавляем модификатор к общей сумме
+                    if (diceType !== 20) {
+                        totalSum += modifier;
+                    }
+                    
+                    // Создаем визуальное представление кубиков
+                    for (let i = 0; i < diceQuantity; i++) {
+                        const isCritSuccess = (diceType === 20 && advantage === 'normal' && results[i] === 20);
+                        const isCritFail = (diceType === 20 && advantage === 'normal' && results[i] === 1);
+                        createDiceIconElement(diceType, results[i], i, isCritSuccess, isCritFail);
+                    }
+                }
+                
+                // Показываем финальный результат для D20 с преимуществом/помехой
+                if (diceType === 20 && diceQuantity === 2) {
+                    setTimeout(() => {
+                        const finalElement = document.createElement('div');
+                        finalElement.className = 'final-result';
+                        
+                        let finalHTML = `<div class="dice-container">
+                            <div class="dice-icon d${diceType}">
+                                ${finalResult}
+                            </div>
+                            <div class="result-text">Финальный результат: ${finalResult}`;
+                        
+                        if (useModifier) {
+                            finalHTML += ` + ${modifier} = ${totalSum}`;
+                        }
+                        
+                        finalHTML += `</div></div>`;
+                        finalElement.innerHTML = finalHTML;
+                        resultsContainer.appendChild(finalElement);
+                    }, 1100);
+                }
+                
+                // Показываем общую сумму
+                if (diceType === 20 && diceQuantity === 2) {
+                    let totalText = `Финальный результат: ${finalResult}`;
+                    if (useModifier) {
+                        totalText += ` + ${modifier} = ${totalSum}`;
+                    }
+                    totalResult.textContent = totalText;
+                } else if (diceType === 20 && diceQuantity === 1) {
+                    let totalText = `Результат: `;
+                    if (isCriticalSuccess) {
+                        totalText += `20 (Критический успех!)`;
+                    } else if (isCriticalFail) {
+                        totalText += `1 (Критический провал!)`;
+                    } else {
+                        totalText += `${results[0]}`;
+                        if (useModifier) {
+                            totalText += ` + ${modifier} = ${totalSum}`;
+                        }
+                    }
+                    totalResult.textContent = totalText;
+                } else if (diceQuantity === 1) {
+                    let totalText = `Результат: ${results[0]}`;
+                    if (useModifier) {
+                        totalText += ` + ${modifier} = ${totalSum}`;
+                    }
+                    totalResult.textContent = totalText;
+                } else {
+                    let totalText = `Общая сумма: ${results.join(' + ')}`;
+                    if (useModifier) {
+                        totalText += ` + ${modifier} = ${totalSum}`;
+                    } else {
+                        totalText += ` = ${totalSum}`;
+                    }
+                    totalResult.textContent = totalText;
+                }
+                
+                // Добавляем в историю
+                setTimeout(() => {
+                    addToHistory(diceType, diceQuantity, results, finalResults, totalSum, advantage, useModifier, modifier, isCriticalSuccess, isCriticalFail);
+                }, 1200);
+            });
+            
+            function rollDice(sides) {
+                return Math.floor(Math.random() * sides) + 1;
+            }
+            
+            function createDiceIconElement(diceType, result, index, isCriticalSuccess, isCriticalFail) {
+                const diceContainer = document.createElement('div');
+                diceContainer.className = 'dice-container';
+                
+                const diceIcon = document.createElement('div');
+                diceIcon.className = `dice-icon d${diceType} rolling`;
+                if (isCriticalSuccess) {
+                    diceIcon.classList.add('critical-success');
+                } else if (isCriticalFail) {
+                    diceIcon.classList.add('critical-fail');
+                }
+                diceIcon.textContent = '?';
+                
+                diceContainer.appendChild(diceIcon);
+                
+                const resultText = document.createElement('div');
+                resultText.className = 'result-text';
+                resultText.textContent = `Бросок ${index + 1}: ?`;
+                diceContainer.appendChild(resultText);
+                
+                resultsContainer.appendChild(diceContainer);
+                
+                // Анимация броска
+                setTimeout(() => {
+                    diceIcon.textContent = result;
+                    diceIcon.classList.remove('rolling');
+                    let resultTextContent = `Бросок ${index + 1}: ${result}`;
+                    
+                    // Добавляем специальные эффекты для D20 при обычном броске
+                    if (diceType === 20) {
+                        if (isCriticalSuccess) {
+                            resultTextContent += ' (Критический успех!)';
+                        } else if (isCriticalFail) {
+                            resultTextContent += ' (Критический провал!)';
+                        }
+                    }
+                    resultText.textContent = resultTextContent;
+                }, 1000);
+            }
+            
+            function createD100Element(result, totalSum, useModifier, modifier) {
+                const diceContainer = document.createElement('div');
+                diceContainer.className = 'dice-container';
+                
+                const d100Display = document.createElement('div');
+                d100Display.className = 'd100-result';
+                d100Display.textContent = result;
+                
+                const resultText = document.createElement('div');
+                resultText.className = 'result-text';
+                let resultTextContent = `Результат D100: ${result}`;
+                if (useModifier) {
+                    resultTextContent += ` + ${modifier} = ${totalSum}`;
+                }
+                resultText.textContent = resultTextContent;
+                
+                diceContainer.appendChild(d100Display);
+                diceContainer.appendChild(resultText);
+                resultsContainer.appendChild(diceContainer);
+            }
+            
+            function addToHistory(diceType, diceQuantity, results, finalResults, totalSum, advantage, useModifier, modifier, isCriticalSuccess, isCriticalFail) {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString();
+                
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                
+                let resultText = '';
+                let advantageText = '';
+                let modifierText = '';
+                
+                if (advantage && advantage !== 'normal') {
+                    advantageText = ` (${advantage === 'advantage' ? 'Преимущество' : 'Помеха'})`;
+                }
+                
+                if (useModifier && !isCriticalSuccess && !isCriticalFail) {
+                    modifierText = ` + ${modifier}`;
+                }
+                
+                if (diceType === 20 && diceQuantity === 2) {
+                    resultText = `D20${advantageText}: ${results[0]}, ${results[1]} → ${finalResults[0]}${modifierText} = ${totalSum}`;
+                } else if (diceType === 20 && diceQuantity === 1) {
+                    if (isCriticalSuccess) {
+                        resultText = `D20: 20 (Критический успех!)`;
+                    } else if (isCriticalFail) {
+                        resultText = `D20: 1 (Критический провал!)`;
+                    } else {
+                        resultText = `D20: ${results[0]}${modifierText} = ${totalSum}`;
+                    }
+                } else if (diceQuantity === 1) {
+                    resultText = `D${diceType}: ${results[0]}${modifierText} = ${totalSum}`;
+                } else {
+                    resultText = `${diceQuantity}D${diceType}: ${results.join(' + ')}${modifierText} = ${totalSum}`;
+                }
+                
+                historyItem.innerHTML = `
+                    <span>${timeString}</span>
+                    <span>${resultText}</span>
+                `;
+                
+                historyList.insertBefore(historyItem, historyList.firstChild);
+                
+                // Ограничиваем историю 10 последними бросками
+                if (historyList.children.length > 10) {
+                    historyList.removeChild(historyList.lastChild);
+                }
+                
+                rollHistory.unshift({
+                    time: timeString,
+                    diceType: diceType,
+                    diceQuantity: diceQuantity,
+                    results: results,
+                    finalResults: finalResults,
+                    totalSum: totalSum,
+                    advantage: advantage,
+                    useModifier: useModifier,
+                    modifier: modifier,
+                    isCriticalSuccess: isCriticalSuccess,
+                    isCriticalFail: isCriticalFail
+                });
+            }
+        });
+    </script>
+</body>
+</html>
